@@ -30,8 +30,8 @@ import (
 	"syscall"
 	"time"
 
+//	"github.com/TinHead/internal/iface"
 	"github.com/gokrazy/gokrazy"
-	"github.com/gokrazy/internal/iface"
 	"github.com/mdlayher/wifi"
 	"golang.org/x/sys/unix"
 )
