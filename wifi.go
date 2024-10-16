@@ -30,7 +30,6 @@ import (
 	"syscall"
 	"time"
 
-//	"github.com/TinHead/internal/iface"
 	"github.com/gokrazy/gokrazy"
 	"github.com/mdlayher/wifi"
 	"golang.org/x/sys/unix"
@@ -238,7 +237,7 @@ func logic() error {
 		cfg:        &cfg,
 	}
 
-	cs, err := iface.NewConfigSocket("wlan0")
+	cs, err := NewConfigSocket("wlan0")
 	if err != nil {
 		return fmt.Errorf("config socket: %v", err)
 	}
