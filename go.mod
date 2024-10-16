@@ -1,4 +1,4 @@
-module github.com/gokrazy/wifi
+module github.com/TinHead/gokrazy-wifi
 
 go 1.18
 
