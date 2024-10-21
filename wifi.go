@@ -19,7 +19,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	// "io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -36,8 +36,10 @@ import (
 )
 
 type wifiConfig struct {
-	SSID string `json:"ssid"`
-	PSK  string `json:"psk"`
+	SSID    string   `json:"ssid"`
+	PSK     string   `json:"psk"`
+	Modules []string `json:"modules"`
+	WlanDev string   `json:"wlan_dev"`
 }
 
 type wifiCtx struct {
@@ -182,9 +184,9 @@ func logic() error {
 		cfg.SSID = *ssid
 		cfg.PSK = *psk
 	} else {
-		b, err := ioutil.ReadFile("/perm/wifi.json")
+		b, err := os.ReadFile("/perm/wifi.json")
 		if err != nil && os.IsNotExist(err) {
-			b, err = ioutil.ReadFile("/etc/wifi.json")
+			b, err = os.ReadFile("/etc/wifi.json")
 		}
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -200,11 +202,7 @@ func logic() error {
 	}
 
 	// modprobe the brcmfmac driver
-	for _, mod := range []string{
-		"kernel/drivers/net/wireless/broadcom/brcm80211/brcmutil/brcmutil.ko",
-		"kernel/drivers/net/wireless/broadcom/brcm80211/brcmfmac/brcmfmac.ko",
-		"kernel/drivers/net/wireless/broadcom/brcm80211/brcmfmac/wcc/brcmfmac-wcc.ko",
-	} {
+	for _, mod := range cfg.Modules {
 		if err := loadModule(mod); err != nil && !os.IsNotExist(err) {
 			return err
 		}
@@ -237,29 +235,33 @@ func logic() error {
 		cfg:        &cfg,
 	}
 
-	cs, err := NewConfigSocket("wlan0")
-	if err != nil {
-		return fmt.Errorf("config socket: %v", err)
-	}
-	defer cs.Close()
-
-	b, err := ioutil.ReadFile("/sys/class/net/wlan0/address")
-	if err != nil {
-		return fmt.Errorf("reading /sys/class/net/wlan0/address: %v", err)
-	}
-	log.Printf("wlan0 MAC address is %s", strings.TrimSpace(string(b)))
-
-	// Ensure the interface is up so that we can send DHCP packets.
-	if err := cs.Up(); err != nil {
-		log.Printf("setting link wlan0 up: %v", err)
-	}
-
-	const controlLoopFrequency = 15 * time.Second
-	for {
-		if err := w.control1(); err != nil {
-			log.Printf("control1: %v", err)
+	for _, intf := range interfaces {
+		cs, err := NewConfigSocket(intf.Name)
+		if err != nil {
+			return fmt.Errorf("config socket: %v", err)
 		}
-		time.Sleep(controlLoopFrequency)
+
+		defer cs.Close()
+
+		b, err := os.ReadFile(fmt.Sprintf("/sys/class/net/%s/address", intf.Name))
+		if err != nil {
+			return fmt.Errorf("reading /sys/class/net/%s/address: %v", intf.Name, err)
+		}
+		log.Printf("wlan0 MAC address is %s", strings.TrimSpace(string(b)))
+
+		// Ensure the interface is up so that we can send DHCP packets.
+		if err := cs.Up(); err != nil {
+			log.Printf("setting link wlan0 up: %v", err)
+		}
+
+		const controlLoopFrequency = 15 * time.Second
+		for {
+			if err := w.control1(); err != nil {
+				log.Printf("control1: %v", err)
+			}
+			time.Sleep(controlLoopFrequency)
+		}
+
 	}
 	return nil
 }
