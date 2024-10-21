@@ -205,6 +205,7 @@ func logic() error {
 	for _, mod := range cfg.Modules {
 		fmt.Println(mod)
 		if err := loadModule(mod); err != nil && !os.IsNotExist(err) {
+			println("Error %s loading module %s", err, mod)
 			return err
 		}
 	}
@@ -214,6 +215,7 @@ func logic() error {
 		return err
 	}
 	interfaces, err := cl.Interfaces()
+
 	if err != nil {
 		return err
 	}
@@ -237,6 +239,7 @@ func logic() error {
 	}
 
 	for _, intf := range interfaces {
+
 		cs, err := NewConfigSocket(intf.Name)
 		if err != nil {
 			return fmt.Errorf("config socket: %v", err)
