@@ -239,7 +239,7 @@ func logic() error {
 	}
 
 	for _, intf := range interfaces {
-
+		println("interface: %s", intf.Name)
 		cs, err := NewConfigSocket(intf.Name)
 		if err != nil {
 			return fmt.Errorf("config socket: %v", err)
