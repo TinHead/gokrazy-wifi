@@ -203,6 +203,7 @@ func logic() error {
 
 	// modprobe the brcmfmac driver
 	for _, mod := range cfg.Modules {
+		fmt.Println(mod)
 		if err := loadModule(mod); err != nil && !os.IsNotExist(err) {
 			return err
 		}
